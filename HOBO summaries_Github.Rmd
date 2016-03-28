@@ -1,0 +1,205 @@
+---
+title: "HOBO summaries"
+author: "Ecosystem Dynamics Research Lab"
+date: "March 18, 2015"
+output:
+  github_document:
+    fig_width: 5
+    fig_height: 5
+    dev: jpeg
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(data.table)
+library(reshape2)
+library(dplyr)
+library(knitr)
+library(shiny)
+library(animation)
+library(lubridate)
+library(xtable)
+
+load('Daily HOBO 2004 to 2014 Precip Gapfilled.Rdata')
+all.d[, N := NULL]
+all.d$PAR.cum <- (all.d$PAR*86400)/1000000
+
+all.d[, period := NA]
+all.d[, period := ifelse(date > as.Date("2004-04-30") & date < as.Date("2005-05-01"), "2004", period)] 
+all.d[, period := ifelse(date > as.Date("2005-04-30") & date < as.Date("2006-05-01"), "2005", period)] 
+all.d[, period := ifelse(date > as.Date("2006-04-30") & date < as.Date("2007-05-01"), "2006", period)] 
+all.d[, period := ifelse(date > as.Date("2007-04-30") & date < as.Date("2008-05-01"), "2007", period)] 
+all.d[, period := ifelse(date > as.Date("2008-04-30") & date < as.Date("2009-05-01"), "2008", period)] 
+all.d[, period := ifelse(date > as.Date("2009-04-30") & date < as.Date("2010-05-01"), "2009", period)] 
+all.d[, period := ifelse(date > as.Date("2010-04-30") & date < as.Date("2011-05-01"), "2010", period)] 
+all.d[, period := ifelse(date > as.Date("2011-04-30") & date < as.Date("2012-05-01"), "2011", period)]
+all.d[, period := ifelse(date > as.Date("2012-04-30") & date < as.Date("2013-05-01"), "2012", period)] 
+all.d[, period := ifelse(date > as.Date("2013-04-30") & date < as.Date("2014-05-01"), "2013", period)] 
+all.d[, period := ifelse(date > as.Date("2014-04-30") & date < as.Date("2015-05-01"), "2014", period)] 
+all.d[, period := ifelse(date > as.Date("2015-04-30") & date < as.Date("2016-05-01"), "2015", period)] 
+
+
+# Summer seaosn id
+all.d[, season := NA]
+all.d[, season := ifelse(date > as.Date("2004-04-30") & date < as.Date("2004-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2005-04-30") & date < as.Date("2005-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2006-04-30") & date < as.Date("2006-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2007-04-30") & date < as.Date("2007-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2008-04-30") & date < as.Date("2008-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2009-04-30") & date < as.Date("2009-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2010-04-30") & date < as.Date("2010-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2011-04-30") & date < as.Date("2011-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2012-04-30") & date < as.Date("2012-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2013-04-30") & date < as.Date("2013-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2014-04-30") & date < as.Date("2014-10-01"), "Summer", season)]
+all.d[, season := ifelse(date > as.Date("2015-04-30") & date < as.Date("2015-10-01"), "Summer", season)]
+
+all.d[, season := ifelse(year == 2004 & date >= as.Date("2004-10-01") | year == 2005 & date <= as.Date("2005-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2005 & date >= as.Date("2005-10-01") | year == 2006 & date <= as.Date("2006-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2006 & date >= as.Date("2006-10-01") | year == 2007 & date <= as.Date("2007-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2007 & date >= as.Date("2007-10-01") | year == 2008 & date <= as.Date("2008-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2008 & date >= as.Date("2008-10-01") | year == 2009 & date <= as.Date("2009-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2009 & date >= as.Date("2009-10-01") | year == 2010 & date <= as.Date("2010-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2010 & date >= as.Date("2010-10-01") | year == 2011 & date <= as.Date("2011-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2011 & date >= as.Date("2011-10-01") | year == 2012 & date <= as.Date("2012-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2012 & date >= as.Date("2012-10-01") | year == 2013 & date <= as.Date("2013-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2013 & date >= as.Date("2013-10-01") | year == 2014 & date <= as.Date("2014-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2014 & date >= as.Date("2014-10-01") | year == 2015 & date <= as.Date("2015-04-30"), "Non-summer", season)]
+all.d[, season := ifelse(year == 2015 & date >= as.Date("2015-10-01") | year == 2016 & date <= as.Date("2016-04-30"), "Non-summer", season)]
+
+all.d$month <- month(all.d$date)
+all.d$month.l <- month(all.d$date, label=TRUE)
+all.d$week <- week(all.d$date)
+# Annual
+annual <- all.d[, list(precip = sum(precip, na.rm=T),
+                       Tair = mean(Tair, na.rm=T),
+                       Tmax = max(Tair, na.rm=T),
+                       Tmin = min(Tair, na.rm=T),
+                       Method = "Calendar"),
+                by = list(year)]
+
+annual.p <- all.d[, list(precip = sum(precip, na.rm=T),
+                       Tair = mean(Tair, na.rm=T),
+                       Tmax = max(Tair, na.rm=T),
+                       Tmin = min(Tair, na.rm=T),
+                       Method = "Calendar"),
+                by = list(year)]
+
+```
+# Introduction
+
+This is documant contains summaries of the HOBO weather station. The data can be found at 
+[Bonanza Creek LTER](http://www.lter.uaf.edu/data_detail.cfm?datafile_pkey=453). The range of data is `r min(all.d$date)` to `r max(all.d$date)`.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# create dataframe that represents 2004-2013 historical data
+Past <- all.d %>%
+  filter(year != max(all.d$year)) %>%     # filter out missing data (identified with '-99' value) & current year data
+  group_by(DOY) %>%
+  mutate(upper = max(Tair), # identify max value for each day
+         lower = min(Tair), # identify min value for each day
+         avg = mean(Tair),  # calculate mean value for each day
+         se = sd(Tair)/sqrt(length(Tair))) %>%  # calculate standard error of mean
+  mutate(avg_upper = avg+(2.101*se),  # calculate 95% CI for mean
+         avg_lower = avg-(2.101*se)) %>%  # calculate 95% CI for mean
+  ungroup()
+
+
+Present <- all.d %>% filter(year == max(all.d$year))
+
+# create dataframe that represents the lowest temp for each day for the historical data
+PastLows <- Past %>%
+  group_by(DOY) %>%
+  summarise(Pastlow = min(Tair)) # identify lowest Tair for each day from 1995-2013
+
+# create dataframe that identifies the days in 2014 in which the Tairs were lower than all previous 19 years
+PresentLows <- Present %>%
+  left_join(PastLows) %>%  # merge historical lows to current year low data
+  mutate(record = ifelse(Tair<Pastlow, "Y", "N")) %>% # identifies if current year was record low
+  filter(record == "Y")  # filter for days that represent current year record lows
+
+# create dataframe that represents the highest Tair for each day for the historical data
+PastHighs <- Past %>%
+  group_by(DOY) %>%
+  summarise(Pasthigh = max(Tair))  # identify highest Tair for each day from 1995-2013
+
+# create dataframe that identifies the days in 2014 in which the Tairs were higher than all previous 19 years
+PresentHighs <- Present %>%
+  left_join(PastHighs) %>%  # merge historical highs to current year low data
+  mutate(record = ifelse(Tair>Pasthigh, "Y", "N")) %>% # identifies if current year was record high
+  filter(record == "Y")  # filter for days that represent current year record highs
+
+# create a small dataframe to represent legend symbol for 2014 Tairerature
+set.seed(1)
+legend_data <- data.frame(x=seq(205,212),y=rnorm(8,-20,2))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10, fig.height=6, fig.cap='Weather data all years'}
+p <- ggplot(Past, aes(DOY, Tair)) +
+    theme_bw()+
+  theme(panel.grid.major = element_blank())+
+  labs(x="Month", y="Temperature (C)")+
+  geom_linerange(Past, mapping=aes(x=DOY, ymin=lower, ymax=upper), colour = "wheat2", alpha=.1)
+
+p <- p + 
+  geom_linerange(Past, mapping=aes(x=DOY, ymin=avg_lower, ymax=avg_upper), colour = "grey80")
+
+p <- p + 
+  geom_line(Present, mapping=aes(x=DOY, y=Tair, group=1))# +
+
+p <- p + 
+  geom_hline(yintercept = -40, colour = "white", linetype=1) +
+  geom_hline(yintercept = -20, colour = "white", linetype=1) +
+  geom_hline(yintercept = -10, colour = "white", linetype=1) +
+  geom_hline(yintercept = 0, colour = "white", linetype=1) +
+  geom_hline(yintercept = 10, colour = "white", linetype=1) +
+  geom_hline(yintercept = 20, colour = "white", linetype=1)
+
+p <- p + 
+  geom_vline(xintercept = 31, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 59, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 90, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 120, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 151, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 181, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 212, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 243, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 273, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 304, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 334, colour = "grey80", linetype=3, size=.5) +
+  geom_vline(xintercept = 365, colour = "grey80", linetype=3, size=.5) 
+
+p <- p + scale_x_continuous(
+                     breaks = c(15,45,75,105,135,165,195,228,258,288,320,350),
+                     labels = c("Jan", "Feb", "Mar", "Apr",
+                                "May", "Jun", "Jul", "Aug", "Sep",
+                                "Oct", "Nov", "Dec"))
+
+p <- p +
+  geom_point(data=PresentLows, aes(x=DOY, y=Tair), colour="blue3") +
+  geom_point(data=PresentHighs, aes(x=DOY, y=Tair), colour="firebrick3")
+
+p <- p +
+  #annotate("segment", x = 100, xend = 120, y = -18, yend = -22, colour = "blue3") +
+  annotate("text", x = 140, y = -30, label = paste("We had", length(PresentLows$Tair), "days that were the", sep=" "), size=3, colour="blue3") +
+  annotate("text", x = 140, y = -32, label = "coldest since 2004", size=3, colour="blue3") +
+  #annotate("segment", x = 257, xend = 270, y = 16, yend = 18, colour = "firebrick3") +
+  annotate("text", x = 300, y = 20, label = paste("We had", length(PresentHighs$Tair), "days that were the", sep=" "), size=3, colour="firebrick3") +
+  annotate("text", x = 300, y = 18, label = "hottest since 2004", size=3, colour="firebrick3")
+
+
+p <- p +
+  annotate("segment", x = 211, xend = 211, y = -10, yend = -35, colour = "wheat2", size=3) +
+  annotate("segment", x = 211, xend = 211, y = -17, yend = -28, colour = "grey80", size=3) +
+  geom_line(data=legend_data, aes(x=x,y=y)) +
+  annotate("segment", x = 213, xend = 218, y = -17, yend = -17, colour = "grey80", size=.5) +
+  annotate("segment", x = 213, xend = 218, y = -28, yend = -28, colour = "grey80", size=.5) +
+  annotate("segment", x = 218, xend = 218, y = -28, yend = -17, colour = "grey80", size=.5) +
+  annotate("text", x = 229, y = -22.5, label = "95% CI", size=2, colour="gray30") +
+  annotate("text", x = min(legend_data$x)-2, y = -21.25291, hjust=1, label = paste0(max(all.d$year), " TEMPERATURE"), size=2, colour="gray30")+
+  annotate("text", x = 223, y = -35, label = "RECORD LOW", size=2, colour="gray30") +
+  annotate("text", x = 223, y = -10, label = "RECORD HIGH", size=2, colour="gray30")
+
+p
+```
+
